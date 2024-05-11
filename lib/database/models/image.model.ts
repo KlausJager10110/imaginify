@@ -4,8 +4,8 @@ import { Document, Schema, model, models } from 'mongoose';
 export interface IImage extends Document {
     title: string;
     transformationType: string;
-    publicID: string;
-    secureUrl: string;
+    publicId: string;
+    secureURL: string; //เคยเจอปัญหาตรงนี้ ในส่วน fontend ใช้ secureUrl แต่ backend ใช้ secureURL ต้องใช้ให้ตรงกัน****สำคัญมาก
     width?: number;
     height?: number;
     config?: object;
@@ -27,12 +27,12 @@ export interface IImage extends Document {
 const ImageSchema = new Schema({
     title: { type: String, required: true },
     transformationType: { type: String, required: true },
-    publicID: { type: String, required: true },
-    secureUrl: { type: URL, required: true },
+    publicId: { type: String, required: true },
+    secureURL: { type: String, required: true },  //เคยเจอปัญหาตรงนี้ ในส่วน fontend ใช้ secureUrl แต่ backend ใช้ secureURL ต้องใช้ให้ตรงกัน****สำคัญมาก
     width: { type: Number },
     height: { type: Number },
     config: { type: Object },
-    transformationUrl: { type: URL },
+    transformationUrl: { type: String },
     aspectRation: { type: String },
     color: { type: String },
     prompt: { type: String }, // prompt ที่ใช้ generate ภาพ

@@ -35,7 +35,7 @@ const MediaUploader = ({
             publicId: result?.info?.public_id,
             width: result?.info?.width,
             height: result?.info?.height,
-            secureUrl: result?.info?.secure_url,
+            secureURL: result?.info?.secure_url,  //เคยเจอปัญหาตรงนี้ ในส่วน fontend ใช้ secureUrl แต่ backend ใช้ secureURL ต้องใช้ให้ตรงกัน****สำคัญมาก
         }))
 
         onValueChange(result?.info?.public_id) // update public id
@@ -90,7 +90,7 @@ const MediaUploader = ({
                         <div className="media-uploader_cta" onClick={() => open()}> 
                             <div className="media-uploader_cta-image">
                                 <Image 
-                                    src='assets/icons/add.svg'
+                                    src='/assets/icons/add.svg'
                                     alt='add image'
                                     width={24}
                                     height={24}

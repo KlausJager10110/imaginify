@@ -80,7 +80,7 @@ export async function updateCredits(userId: string, creditFee: number) {
 
     const updatedUserCredits = await User.findOneAndUpdate(
       { _id: userId },
-      { $inc: { creditBalance: creditFee }},
+      { $inc: { creditBalance: creditFee }}, //เป็นการ update ค่าของ mongodb : { $inc: { <field1>: <value1>, <field2>: <value2>, ... } },
       { new: true }
     )
 

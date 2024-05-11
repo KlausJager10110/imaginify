@@ -26,9 +26,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { aspectRatioOptions, creditFee, defaultValues, transformationTypes } from "@/constants"
 import { CustomField } from "./CustomField"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils"
 import MediaUploader from "./MediaUploader"
+import TransformedImage from "./TransformedImage"
+import { updateCredits } from "@/lib/actions/user.actions"
+import { getCldImageUrl } from "next-cloudinary"
+import { addImage, updateImage } from "@/lib/actions/image.action"
+import { useRouter } from "next/navigation"
+import { InsufficientCreditsModal } from "./InsufficientCreditsModal"
 
 // varidation
 // const formSchema = z.object({
@@ -51,7 +57,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
     const [transformationConfig, setTransformationConfig] = useState(config);
     const [newTransformation, setNewTranformation] = useState<Transformations | null>(null);
     const [isPending, startTransition] = useTransition()
-
+    const router = useRouter();
 
     const initialValues = data && action === 'Update' ? {
         title: data?.title,
@@ -68,8 +74,72 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
     })
 
   // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values)
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        // console.log(values)
+        setIsSubmitting(true)
+        
+        if (data || image) {
+            const transformationUrl = getCldImageUrl({
+                width: image?.width,
+                height: image?.height,
+                src: image?.publicId,
+                ...transformationConfig
+            })
+
+            const imageData = {
+                title: values.title,
+                publicId: image?.publicId,
+                transformationType: type,
+                width: image?.width,
+                height: image?.height,
+                config: transformationConfig,
+                secureURL: image?.secureURL,
+                transformationURL: transformationUrl,
+                aspectRatio: values.aspectRatio,
+                prompt: values.prompt,
+                color: values.color,
+            }
+
+            if (action === 'Add') {
+                try {
+                    const newImage = await addImage({ //มี await แล้ว function ต้องเป็น async
+                        image: imageData,
+                        userId,
+                        path: '/'
+                    })
+                    if (newImage) {
+                        form.reset() // ล้างฟอร์ม
+                        setImage(data)
+                        router.push(`/transformations/${newImage._id}`)
+                    }
+
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+
+            if (action === 'Update') {
+                try {
+                    const updatedImage = await updateImage({ //มี await แล้ว function ต้องเป็น async
+                        image: {
+                            ...imageData,
+                            _id: data._id,
+                        },
+                        userId,
+                        path: `/transformations/${data._id}`
+                    })
+                    if (updatedImage) {
+                        router.push(`/transformations/${updatedImage._id}`)
+                    }
+
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+
+        }
+
+        setIsSubmitting(false)
     }
 
 
@@ -103,7 +173,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
         }, 1000); //ถ้าแบบ debounce คือ เวลาพิมพ์ในช่อง input มันจะยังไม่ส่งข้อมูลไปเลยจนกว่าจะครบ 1 วิ(1000ms) แต่ถ้าเป็นแบบ regular ทุกครั้งที่เราพิมพ์ 1 ตัว มันจะส่ง 1 ครั้ง (มั้ง)
     }
 
-    // TODO: Return to updateCredits
+
     const onTransformHandler = async () => {
         setIsTransforming(true);
 
@@ -114,14 +184,22 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
         setNewTranformation(null);
 
         startTransition(async () => {
-            // await updateCredits(userId, creditFee);
+            // await updateCredits(userId, creditFee); ****[old]
+            await updateCredits(userId, creditFee); //****[new]
         })
     }
 
+    useEffect(() => {
+        if (image && (type === 'restore' || type === 'removeBackground')) {
+            setNewTranformation(transformationType.config)
+        }
+
+    }, [image, transformationType.config, type])
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                {creditBalance < Math.abs(creditFee) && <InsufficientCreditsModal />}
                 <CustomField 
                     control={form.control}
                     name="title"
@@ -205,6 +283,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                     </div>
                 )}
 
+                {/* Media Uploader */}
                 <div className="media-uploader-field">
                     <CustomField 
                         control={form.control}
@@ -220,6 +299,16 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                             />
                         )}
                     />
+
+                    <TransformedImage 
+                        image={image}
+                        type={type}
+                        title={form.getValues().title}
+                        isTransforming={isTransforming}
+                        setIsTransforming={setIsTransforming}
+                        transformationConfig={transformationConfig}
+                    />
+
                 </div>
 
                 <div className="flex flex-col gap-4">
