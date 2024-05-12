@@ -167,10 +167,9 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                     [fieldName === 'prompt' ? 'prompt' : 'to']: value
                 }
             }))
-
-            return onChangeField(value);
-
-        }, 1000); //ถ้าแบบ debounce คือ เวลาพิมพ์ในช่อง input มันจะยังไม่ส่งข้อมูลไปเลยจนกว่าจะครบ 1 วิ(1000ms) แต่ถ้าเป็นแบบ regular ทุกครั้งที่เราพิมพ์ 1 ตัว มันจะส่ง 1 ครั้ง (มั้ง)
+        }, 1000)(); //ถ้าแบบ debounce คือ เวลาพิมพ์ในช่อง input มันจะยังไม่ส่งข้อมูลไปเลยจนกว่าจะครบ 1 วิ(1000ms) แต่ถ้าเป็นแบบ regular ทุกครั้งที่เราพิมพ์ 1 ตัว มันจะส่ง 1 ครั้ง (มั้ง)
+            // ถ้า debounce ไม่ทำงานก็ใส่ () ต่อไป
+        return onChangeField(value)
     }
 
 
@@ -218,6 +217,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                         render={({ field }) => (
                             <Select
                                 onValueChange={(value) => onSelectFieldHandler(value, field.onChange)}
+                                value={field.value}
                             >
                                 <SelectTrigger className="select-field">
                                     <SelectValue placeholder="Select size" />
@@ -246,7 +246,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                             name='prompt'
                             formLabel={type === 'remove' ? 'Object to remove' : 'Object to recolor'}
                             className="w-full"
-                            render={(({ field }) => (
+                            render={({ field }) => (
                                 <Input 
                                     value={field.value}
                                     className="input-field"
@@ -257,7 +257,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                                         field.onChange
                                     )}
                                 />
-                            ))}
+                            )}
                         />
 
                         {type === 'recolor' && (
